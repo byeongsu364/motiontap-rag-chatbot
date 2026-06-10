@@ -139,7 +139,7 @@ if ask_button:
                 st.caption(f"페이지: {page} | 섹션: {section}")
 
             with col2:
-                if os.path.exists(source_path):
+                try:
                     with open(source_path, "rb") as file:
                         st.download_button(
                             label="다운로드",
@@ -148,3 +148,5 @@ if ask_button:
                             mime="application/octet-stream",
                             key=f"download_{source}"
                         )
+                except FileNotFoundError:
+                        st.caption("파일 없음")
