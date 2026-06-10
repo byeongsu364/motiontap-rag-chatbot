@@ -1,4 +1,5 @@
 import os
+from urllib.parse import quote
 
 import streamlit as st
 from dotenv import load_dotenv
@@ -10,6 +11,7 @@ load_dotenv()
 
 VECTOR_DIR = "./vectorstore/faiss_index"
 DATA_DIR = "./data"
+GITHUB_DATA_URL = "https://github.com/byeongsu364/motiontap-rag-chatbot/blob/main/data"
 
 st.set_page_config(
     page_title="Motion Tap RAG 챗봇",
@@ -19,9 +21,7 @@ st.set_page_config(
 st.title("🤖 Motion Tap AI 어시스턴트")
 st.write("모션탭 매뉴얼과 Q&A 자료를 기반으로 답변하는 RAG 챗봇입니다.")
 
-embeddings = OpenAIEmbeddings(
-    model="text-embedding-3-small"
-)
+embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
 
 vectorstore = FAISS.load_local(
     VECTOR_DIR,
@@ -29,9 +29,7 @@ vectorstore = FAISS.load_local(
     allow_dangerous_deserialization=True
 )
 
-retriever = vectorstore.as_retriever(
-    search_kwargs={"k": 4}
-)
+retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
 
 llm = ChatOpenAI(
     model="gpt-4o-mini",
@@ -75,7 +73,10 @@ if ask_button:
             docs = retriever.invoke(question)
 
             context = "\n\n".join([
-                f"[출처: {doc.metadata.get('source', '알 수 없음')} / 페이지: {doc.metadata.get('page', '-')} / 섹션: {doc.metadata.get('section', '-')} ]\n{doc.page_content}"
+                f"[출처: {doc.metadata.get('source', '알 수 없음')} / "
+                f"페이지: {doc.metadata.get('page', '-')} / "
+                f"섹션: {doc.metadata.get('section', '-')}]\n"
+                f"{doc.page_content}"
                 for doc in docs
             ])
 
@@ -131,21 +132,14 @@ if ask_button:
             page = doc.metadata.get("page", "-")
             section = doc.metadata.get("section", "-")
 
-            source_path = os.path.join(DATA_DIR, source)
+            encoded_source = quote(source)
+            github_url = f"{GITHUB_DATA_URL}/{encoded_source}"
 
             col1, col2 = st.columns([4, 1])
 
             with col1:
-                st.markdown(f"📄 **{source}**")
+                st.markdown(f"[📄 **{source}**]({github_url})")
                 st.caption(f"페이지: {page} | 섹션: {section}")
 
             with col2:
-                if os.path.exists(source_path):
-                    with open(source_path, "rb") as file:
-                        st.download_button(
-                            label="열기",
-                            data=file.read(),
-                            file_name=source,
-                            mime="application/octet-stream",
-                            key=f"download_{source}"
-            )
+                st.link_button("열기", github_url)
