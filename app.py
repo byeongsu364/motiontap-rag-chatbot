@@ -1,4 +1,5 @@
 import os
+import unicodedata
 
 import streamlit as st
 from dotenv import load_dotenv
@@ -10,6 +11,17 @@ load_dotenv()
 
 VECTOR_DIR = "./vectorstore/faiss_index"
 DATA_DIR = "./data"
+
+def find_source_file(source):
+    normalized_source = unicodedata.normalize("NFC", source)
+
+    for file_name in os.listdir(DATA_DIR):
+        normalized_file_name = unicodedata.normalize("NFC", file_name)
+
+        if normalized_file_name == normalized_source:
+            return os.path.join(DATA_DIR, file_name)
+
+    return None
 
 st.set_page_config(
     page_title="Motion Tap RAG 챗봇",
@@ -130,7 +142,7 @@ if ask_button:
             page = doc.metadata.get("page", "-")
             section = doc.metadata.get("section", "-")
 
-            source_path = os.path.join(DATA_DIR, source)
+            source_path = find_source_file(source)
 
             col1, col2 = st.columns([4, 1])
 
@@ -139,7 +151,7 @@ if ask_button:
                 st.caption(f"페이지: {page} | 섹션: {section}")
 
             with col2:
-                try:
+                if source_path and os.path.exists(source_path):
                     with open(source_path, "rb") as file:
                         st.download_button(
                             label="다운로드",
@@ -148,5 +160,5 @@ if ask_button:
                             mime="application/octet-stream",
                             key=f"download_{source}"
                         )
-                except FileNotFoundError:
-                        st.caption("파일 없음")
+                else:
+                    st.caption("파일 없음")
