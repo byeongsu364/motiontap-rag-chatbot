@@ -1,5 +1,4 @@
 import os
-from urllib.parse import quote
 
 import streamlit as st
 from dotenv import load_dotenv
@@ -11,7 +10,6 @@ load_dotenv()
 
 VECTOR_DIR = "./vectorstore/faiss_index"
 DATA_DIR = "./data"
-GITHUB_DATA_URL = "https://github.com/byeongsu364/motiontap-rag-chatbot/blob/main/data"
 
 st.set_page_config(
     page_title="Motion Tap RAG 챗봇",
@@ -132,14 +130,21 @@ if ask_button:
             page = doc.metadata.get("page", "-")
             section = doc.metadata.get("section", "-")
 
-            encoded_source = quote(source)
-            github_url = f"{GITHUB_DATA_URL}/{encoded_source}"
+            source_path = os.path.join(DATA_DIR, source)
 
             col1, col2 = st.columns([4, 1])
 
             with col1:
-                st.markdown(f"[📄 **{source}**]({github_url})")
+                st.markdown(f"📄 **{source}**")
                 st.caption(f"페이지: {page} | 섹션: {section}")
 
             with col2:
-                st.link_button("열기", github_url)
+                if os.path.exists(source_path):
+                    with open(source_path, "rb") as file:
+                        st.download_button(
+                            label="다운로드",
+                            data=file.read(),
+                            file_name=source,
+                            mime="application/octet-stream",
+                            key=f"download_{source}"
+                        )
