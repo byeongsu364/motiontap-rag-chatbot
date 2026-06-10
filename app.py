@@ -135,17 +135,14 @@ if ask_button:
 
             col1, col2 = st.columns([4, 1])
 
+            github_url = (
+                "https://github.com/byeongsu364/motiontap-rag-chatbot/blob/main/data/"
+                + source.replace(" ", "%20")
+            )
+
             with col1:
-                st.markdown(f"📄 **{source}**")
+                st.markdown(f"[📄 **{source}**]({github_url})")
                 st.caption(f"페이지: {page} | 섹션: {section}")
 
             with col2:
-                if os.path.exists(source_path):
-                    with open(source_path, "rb") as file:
-                        st.download_button(
-                            label="열기",
-                            data=file.read(),
-                            file_name=source,
-                            mime="application/octet-stream",
-                            key=f"download_{source}"
-                        )
+                st.link_button("열기", github_url)
